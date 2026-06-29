@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 
 from app.api.router import api_router
+from app.core.config import settings
 
 app = FastAPI(
-    title="CareLens AI API",
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
     description="AI-powered Clinical Decision Support & Medical Report Analysis Platform",
-    version="1.0.0",
 )
 
 app.include_router(api_router)
