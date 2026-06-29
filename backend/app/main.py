@@ -1,22 +1,11 @@
 from fastapi import FastAPI
 
+from app.api.router import api_router
+
 app = FastAPI(
     title="CareLens AI API",
-    description="AI-powered Clinical Decision Support & Medical Report Analysis",
-    version="1.0.0"
+    description="AI-powered Clinical Decision Support & Medical Report Analysis Platform",
+    version="1.0.0",
 )
 
-
-@app.get("/")
-def root():
-    return {
-        "message": "Welcome to CareLens AI 🚀",
-        "status": "Backend is running successfully"
-    }
-
-
-@app.get("/health")
-def health_check():
-    return {
-        "status": "healthy"
-    }
+app.include_router(api_router)
