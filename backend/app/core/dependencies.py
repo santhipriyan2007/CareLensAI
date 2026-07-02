@@ -3,13 +3,14 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.security import decode_access_token
 from app.database.supabase import supabase
+from app.schemas.user import UserResponse
 
 security = HTTPBearer()
 
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-):
+) -> UserResponse:
     """
     Get the currently authenticated user.
     """
@@ -37,7 +38,9 @@ def get_current_user(
             detail="User not found.",
         )
 
-    return result.data[0]
+    # Convert Supabase dictionary into a UserResponse object
+    return UserResponse.model_validate(result.data[0])
+
 
 def require_role(*allowed_roles: str):
     """
@@ -45,9 +48,9 @@ def require_role(*allowed_roles: str):
     """
 
     def role_checker(
-        current_user=Depends(get_current_user),
+        current_user: UserResponse = Depends(get_current_user),
     ):
-        if current_user["role"] not in allowed_roles:
+        if current_user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to access this resource.",
@@ -55,4 +58,4 @@ def require_role(*allowed_roles: str):
 
         return current_user
 
-    return role_checker    
+    return role_checker 
