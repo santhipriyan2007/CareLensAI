@@ -83,3 +83,34 @@ class StorageService:
             "file_type": file.content_type,
             "file_size": len(file_bytes),
         }
+
+    @classmethod
+    def generate_signed_url(
+        cls,
+        storage_path: str,
+        expires_in: int = 60,
+    ) -> str:
+        """
+        Generate a temporary signed URL for a file
+        stored in Supabase Storage.
+
+        Default expiry: 60 seconds.
+        """
+
+        try:
+            response = (
+                supabase.storage
+                .from_(cls.BUCKET_NAME)
+                .create_signed_url(
+                    storage_path,
+                    expires_in,
+                )
+            )
+
+            return response["signedURL"]
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to generate signed URL: {str(e)}",
+            )

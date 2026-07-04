@@ -10,20 +10,21 @@ class UploadReportRequest(BaseModel):
 
 class ReportResponse(BaseModel):
     id: UUID
-    user_id: UUID
+
+    patient_user_id: UUID
+    uploaded_by_user_id: UUID
 
     original_file_name: str
-    stored_file_name: str
-
     file_type: str
     file_size: int
 
-    storage_path: str
-
     uploaded_at: datetime
+
+    download_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ReportListResponse(BaseModel):
+    total: int
     reports: list[ReportResponse]
