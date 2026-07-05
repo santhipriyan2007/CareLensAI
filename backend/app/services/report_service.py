@@ -109,10 +109,14 @@ class ReportService:
         )
 
     @staticmethod
-    async def get_report_by_id(
+    def _get_authorized_report(
         report_id: UUID,
         current_user: UserResponse,
-    ) -> ReportResponse:
+    ) -> dict:
+        """
+        Retrieve a report and verify that the current user
+        is authorized to access it.
+        """
 
         response = (
             supabase.table("reports")
@@ -137,6 +141,19 @@ class ReportService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You are not authorized to access this report.",
             )
+
+        return report
+
+    @staticmethod
+    async def get_report_by_id(
+        report_id: UUID,
+        current_user: UserResponse,
+    ) -> ReportResponse:
+
+        report = ReportService._get_authorized_report(
+            report_id,
+            current_user,
+        )
 
         return ReportResponse(
             id=report["id"],
@@ -155,32 +172,13 @@ class ReportService:
         current_user: UserResponse,
     ) -> dict:
         """
-        Generate a signed URL for a report after authorization.
+        Generate a signed URL after authorization.
         """
 
-        response = (
-            supabase.table("reports")
-            .select("*")
-            .eq("id", str(report_id))
-            .execute()
+        report = ReportService._get_authorized_report(
+            report_id,
+            current_user,
         )
-
-        if not response.data:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Report not found.",
-            )
-
-        report = response.data[0]
-
-        if (
-            current_user.role == "patient"
-            and report["patient_user_id"] != str(current_user.id)
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You are not authorized to access this report.",
-            )
 
         signed_url = StorageService.generate_signed_url(
             report["storage_path"]
