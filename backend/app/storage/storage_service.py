@@ -1,10 +1,11 @@
+import os
+import tempfile
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi import HTTPException, UploadFile
 
 from app.database.supabase import supabase
-
 
 class StorageService:
     BUCKET_NAME = "medical-reports"
@@ -114,3 +115,39 @@ class StorageService:
                 status_code=500,
                 detail=f"Failed to generate signed URL: {str(e)}",
             )
+
+    @classmethod
+    def download_to_temp_file(
+        cls,
+        storage_path: str,
+    ) -> str:
+        """
+        Download a file from Supabase Storage into a temporary
+        local PDF file.
+
+        Returns:
+            Local file path.
+        """
+
+        try:
+
+            response = (
+                supabase.storage
+                .from_(cls.BUCKET_NAME)
+                .download(storage_path)
+            )
+
+            with tempfile.NamedTemporaryFile(
+                delete=False,
+                suffix=".pdf",
+            ) as temp_file:
+
+                temp_file.write(response)
+
+                return temp_file.name
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to download report: {str(e)}",
+            )        

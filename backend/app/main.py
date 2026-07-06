@@ -7,6 +7,8 @@ from app.core.config import settings
 
 from app.database.supabase import supabase
 
+from app.api.routes.analysis import router as analysis_router
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 CareLens AI Backend Starting...")
@@ -27,3 +29,4 @@ app = FastAPI(
 )
 
 app.include_router(api_router)
+app.include_router(analysis_router)

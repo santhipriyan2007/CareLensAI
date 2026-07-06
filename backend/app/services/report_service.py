@@ -109,6 +109,30 @@ class ReportService:
         )
 
     @staticmethod
+    def get_report_record(report_id: UUID) -> dict:
+        """
+        Fetch a report record directly from the database.
+
+        This method performs no authorization checks and is intended
+        for internal service-to-service communication.
+        """
+
+        response = (
+            supabase.table("reports")
+            .select("*")
+            .eq("id", str(report_id))
+            .execute()
+        )
+
+        if not response.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Report not found.",
+            )
+
+        return response.data[0]
+
+    @staticmethod
     def _get_authorized_report(
         report_id: UUID,
         current_user: UserResponse,
