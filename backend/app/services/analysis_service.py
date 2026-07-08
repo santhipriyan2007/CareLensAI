@@ -16,6 +16,7 @@ from app.ai.json_validator import JSONValidator
 from app.ai.prompt_builder import PromptBuilder
 from app.repositories.analysis_repository import AnalysisRepository
 from app.schemas.analysis import (
+    AIAnalysis,
     AnalysisCreateResponse,
     AnalysisResponse,
 )
@@ -45,7 +46,9 @@ class AnalysisService:
         return AnalysisResponse(
             id=data["id"],
             report_id=data["report_id"],
-            analysis=data["analysis"],
+            analysis=AIAnalysis.model_validate(
+                data["analysis"]
+            ),
             created_at=datetime.fromisoformat(
                 data["created_at"].replace("Z", "+00:00")
             ),
@@ -54,9 +57,15 @@ class AnalysisService:
     def analyze_text(
         self,
         report_text: str,
-    ) -> dict:
+    ) -> AIAnalysis:
         """
         Analyze OCR extracted report text.
+
+        Args:
+            report_text: OCR extracted medical report text.
+
+        Returns:
+            Validated AIAnalysis object.
         """
 
         prompt = PromptBuilder.build_medical_report_prompt(
@@ -65,25 +74,41 @@ class AnalysisService:
 
         ai_response = self.gemini.generate(prompt)
 
-        return JSONValidator.parse(ai_response)
+        validated = JSONValidator.parse(
+            ai_response
+        )
+
+        return AIAnalysis.model_validate(
+            validated
+        )
 
     def save_analysis(
         self,
         report_id: UUID,
         ocr_text: str,
-        analysis: dict,
+        analysis: AIAnalysis,
     ) -> AnalysisResponse:
         """
         Persist AI analysis.
+
+        Args:
+            report_id: Report ID.
+            ocr_text: OCR extracted text.
+            analysis: Validated AI analysis.
+
+        Returns:
+            Saved analysis response.
         """
 
         saved = AnalysisRepository.save_analysis(
             report_id=report_id,
             ocr_text=ocr_text,
-            analysis=analysis,
+            analysis=analysis.model_dump(),
         )
 
-        return self._to_response(saved)
+        return self._to_response(
+            saved
+        )
 
     def analyze_report(
         self,
@@ -101,7 +126,9 @@ class AnalysisService:
         if existing:
             return AnalysisCreateResponse(
                 message="Analysis already exists.",
-                analysis=self._to_response(existing),
+                analysis=self._to_response(
+                    existing
+                ),
             )
 
         # Fetch report metadata
@@ -115,7 +142,7 @@ class AnalysisService:
         )
 
         try:
-            # OCR
+            # OCR Extraction
             ocr_text = OCRService.extract_text_from_pdf(
                 pdf_path
             )
@@ -138,5 +165,10 @@ class AnalysisService:
             )
 
         finally:
-            if os.path.exists(pdf_path):
-                os.remove(pdf_path)
+            # Always clean up temporary file
+            if os.path.exists(
+                pdf_path
+            ):
+                os.remove(
+                    pdf_path
+                )
