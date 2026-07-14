@@ -4,20 +4,21 @@ from fastapi import FastAPI
 
 from app.api.router import api_router
 from app.core.config import settings
-
 from app.database.supabase import supabase
 
-from app.api.routes.analysis import router as analysis_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 CareLens AI Backend Starting...")
+
     try:
         supabase.table("users").select("*").limit(1).execute()
         print("✅ Connected to Supabase")
     except Exception as e:
         print(f"❌ Supabase Connection Failed: {e}")
+
     yield
+
     print("🛑 CareLens AI Backend Shutting Down...")
 
 
@@ -29,4 +30,3 @@ app = FastAPI(
 )
 
 app.include_router(api_router)
-app.include_router(analysis_router)
