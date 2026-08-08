@@ -59,6 +59,27 @@ class AnalysisRepository:
         return response.data[0]
 
     @classmethod
+    def get_compare_reports(
+        cls,
+        previous_report_id: UUID,
+        current_report_id: UUID,
+    ) -> tuple[dict | None, dict | None]:
+        """
+        Retrieve analyses for two reports.
+
+        Returns:
+            (
+                previous_report_analysis,
+                current_report_analysis,
+            )
+        """
+
+        previous_analysis = cls.get_by_report_id(previous_report_id)
+        current_analysis = cls.get_by_report_id(current_report_id)
+
+        return previous_analysis, current_analysis
+
+    @classmethod
     def get_history(
         cls,
         page: int = 1,
