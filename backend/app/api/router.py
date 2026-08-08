@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 
+
 from app.api.routes.analysis import router as analysis_router
+from app.api.routes.analytics import router as analytics_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.chat import router as chat_router
 from app.api.routes.compare import router as compare_router
@@ -21,3 +23,4 @@ api_router.include_router(analysis_router)
 api_router.include_router(history_router)
 api_router.include_router(compare_router)
 api_router.include_router(chat_router)
+api_router.include_router(analytics_router)
