@@ -5,7 +5,6 @@ from pathlib import Path
 from fastapi import UploadFile
 
 from app.ocr.easyocr_engine import EasyOCREngine
-from app.ocr.image_preprocessor import ImagePreprocessor
 from app.ocr.pdf_processor import PDFProcessor
 from app.ocr.text_cleaner import TextCleaner
 
@@ -21,7 +20,14 @@ class OCRService:
         file: UploadFile,
     ) -> str:
         """
-        Complete OCR pipeline starting from an uploaded file.
+        Complete text extraction pipeline starting
+        from an uploaded file.
+
+        For PDF files:
+        1. Try native PDF text extraction.
+        2. Fall back to OCR when native text is unavailable.
+
+        The temporary file is removed after processing.
         """
 
         suffix = Path(file.filename).suffix
@@ -48,17 +54,46 @@ class OCRService:
         pdf_path: str,
     ) -> str:
         """
-        Complete OCR pipeline.
+        Hybrid PDF text extraction pipeline.
 
         PDF
             ↓
-        Images
+        Native text extraction
             ↓
-        Preprocess
-            ↓
-        EasyOCR
-            ↓
-        Clean Text
+        Usable text?
+          ├── Yes → Clean Text → Return
+          └── No  → Images → EasyOCR
+                              → Clean Text → Return
+        """
+
+        native_text = PDFProcessor.extract_native_text(
+            pdf_path
+        )
+
+        if PDFProcessor.has_usable_native_text(
+            native_text
+        ):
+            return TextCleaner.clean(
+                native_text
+            )
+
+        return OCRService._extract_text_with_ocr(
+            pdf_path
+        )
+
+    @staticmethod
+    def _extract_text_with_ocr(
+        pdf_path: str,
+    ) -> str:
+        """
+        OCR fallback for scanned/image-based PDFs.
+
+        The original 300-DPI image is passed directly
+        to EasyOCR for this OCR quality test.
+
+        Image preprocessing is intentionally bypassed
+        here temporarily so that OCR performance can be
+        compared against the previous preprocessing pipeline.
         """
 
         images = PDFProcessor.convert_pdf_to_images(
@@ -69,12 +104,8 @@ class OCRService:
 
         for image in images:
 
-            processed = ImagePreprocessor.preprocess(
-                image
-            )
-
             text = OCRService._extract_text(
-                processed
+                image
             )
 
             cleaned = TextCleaner.clean(
@@ -85,18 +116,26 @@ class OCRService:
                 cleaned
             )
 
-        return "\n\n".join(extracted_pages)
+        return "\n\n".join(
+            extracted_pages
+        )
 
     @staticmethod
-    def _extract_text(image):
+    def _extract_text(
+        image,
+    ) -> str:
         """
         Internal OCR abstraction.
 
         Currently uses EasyOCR.
+
         Can later be upgraded to:
         - EasyOCR + Tesseract
         - Google Vision
         - PaddleOCR
         """
 
-        return EasyOCREngine.extract_text(image)
+        return EasyOCREngine.extract_text(
+            image
+        )
+

@@ -6,9 +6,13 @@ from app.core.dependencies import (
     get_current_user,
     require_role,
 )
-from app.schemas.analysis import AnalysisCreateResponse
+from app.schemas.analysis import (
+    AnalysisCreateResponse,
+    AnalysisResponse,
+)
 from app.schemas.user import UserResponse
 from app.services.analysis_service import AnalysisService
+
 
 router = APIRouter(
     prefix="/analysis",
@@ -34,5 +38,25 @@ def analyze_report(
     """
 
     return analysis_service.analyze_report(
+        report_id
+    )
+
+
+@router.get(
+    "/report/{report_id}",
+    response_model=AnalysisResponse,
+    status_code=status.HTTP_200_OK,
+)
+def get_analysis(
+    report_id: UUID,
+    current_user: UserResponse = Depends(
+        require_role("doctor")
+    ),
+):
+    """
+    Retrieve the existing AI analysis for a medical report.
+    """
+
+    return analysis_service.get_analysis(
         report_id
     )

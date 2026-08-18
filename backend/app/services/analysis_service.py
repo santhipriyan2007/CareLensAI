@@ -4,12 +4,15 @@ Analysis Service
 Responsibilities:
 - Analyze OCR text using Gemini
 - Persist AI analysis
+- Retrieve existing AI analysis
 - Orchestrate complete AI workflow
 """
 
 import os
 from datetime import datetime
 from uuid import UUID
+
+from fastapi import HTTPException
 
 from app.ai.gemini_client import GeminiClient
 from app.ai.json_validator import JSONValidator
@@ -172,3 +175,25 @@ class AnalysisService:
                 os.remove(
                     pdf_path
                 )
+
+    def get_analysis(
+        self,
+        report_id: UUID,
+    ) -> AnalysisResponse:
+        """
+        Retrieve an existing analysis for a report.
+        """
+
+        existing = AnalysisRepository.get_by_report_id(
+            report_id
+        )
+
+        if not existing:
+            raise HTTPException(
+                status_code=404,
+                detail="Analysis not found for this report.",
+            )
+
+        return self._to_response(
+            existing
+        )

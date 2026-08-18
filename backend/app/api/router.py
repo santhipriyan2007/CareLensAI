@@ -9,6 +9,7 @@ from app.api.routes.compare import router as compare_router
 from app.api.routes.health import router as health_router
 from app.api.routes.history import router as history_router
 from app.api.routes.ocr import router as ocr_router
+from app.api.routes.patient import router as patient_router
 from app.api.routes.report import router as report_router
 
 
@@ -19,6 +20,7 @@ api_router.include_router(health_router)
 api_router.include_router(auth_router)
 api_router.include_router(report_router)
 api_router.include_router(ocr_router)
+api_router.include_router(patient_router)
 api_router.include_router(analysis_router)
 api_router.include_router(history_router)
 api_router.include_router(compare_router)

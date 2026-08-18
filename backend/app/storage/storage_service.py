@@ -7,6 +7,7 @@ from fastapi import HTTPException, UploadFile
 
 from app.database.supabase import supabase
 
+
 class StorageService:
     BUCKET_NAME = "medical-reports"
 
@@ -32,6 +33,12 @@ class StorageService:
     @classmethod
     async def validate_file_size(cls, file: UploadFile):
         content = await file.read()
+
+        if len(content) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Uploaded file is empty."
+            )
 
         if len(content) > cls.MAX_FILE_SIZE:
             raise HTTPException(
@@ -150,4 +157,4 @@ class StorageService:
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to download report: {str(e)}",
-            )        
+            )
