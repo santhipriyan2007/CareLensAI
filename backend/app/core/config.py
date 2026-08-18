@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-   
+
     # Application
     APP_NAME: str
     APP_VERSION: str
@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-2.5-flash"
 
     # OCR
-    TESSERACT_CMD: str
-    POPPLER_PATH: str
+    TESSERACT_CMD: str = ""
+    POPPLER_PATH: str = ""
 
     # Authentication
     JWT_SECRET_KEY: str
